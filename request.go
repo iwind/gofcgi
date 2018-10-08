@@ -1,20 +1,20 @@
 package gofcgi
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
-	"sync"
-	"math"
-	"net"
-	"time"
-	"net/http"
-	"bufio"
-	"regexp"
-	"strconv"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"fmt"
+	"math"
+	"net"
+	"net/http"
+	"regexp"
+	"strconv"
+	"sync"
+	"time"
 )
 
 var currentRequestId = uint16(0)
@@ -246,12 +246,13 @@ func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
 		}
 
 		if respHeader.Type == FCGI_STDOUT {
-			stdout = append(stdout, b[:respHeader.ContentLength] ...)
+			stdout = append(stdout, b[:respHeader.ContentLength]...)
 			continue
 		}
 
 		if respHeader.Type == FCGI_STDERR {
-			stderr = append(stderr, b[:respHeader.ContentLength] ...)
+			stderr = append(stderr, b[:respHeader.ContentLength]...)
+			continue
 		}
 
 		if respHeader.Type == FCGI_END_REQUEST {
@@ -311,7 +312,7 @@ func (this *Request) nextId() uint16 {
 	requestIdLocker.Lock()
 	defer requestIdLocker.Unlock()
 
-	currentRequestId ++
+	currentRequestId++
 
 	if currentRequestId == math.MaxUint16 {
 		currentRequestId = 0

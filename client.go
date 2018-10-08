@@ -1,9 +1,9 @@
 package gofcgi
 
 import (
+	"errors"
 	"net"
 	"net/http"
-	"errors"
 	"sync"
 	"time"
 )
@@ -39,7 +39,6 @@ func (this *Client) KeepAlive() {
 }
 
 func (this *Client) Call(req *Request) (*http.Response, error) {
-
 	this.isFree = false
 
 	this.locker.Lock()
