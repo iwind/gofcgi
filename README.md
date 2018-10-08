@@ -4,7 +4,7 @@ a **golang client for fastcgi**, support connection pool and easy to use.
 # pool usage
 ~~~golang
 // retrieve shared pool
-pool := gofcgi.SharedPool("tcp", "127.0.0.1", 16)
+pool := gofcgi.SharedPool("tcp", "127.0.0.1:9000", 16)
 client, err := pool.Client()
 if err != nil {
     return
