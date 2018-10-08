@@ -1,4 +1,5 @@
-GOLANG CLIENT FOR FASTCGI
+# description
+a **golang client for fastcgi**, support connection pool and easy to use.
 
 # pool usage
 ~~~golang
