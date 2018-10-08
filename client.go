@@ -46,6 +46,7 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 	if this.keepAlive && this.conn == nil {
 		err := this.Connect()
 		if err != nil {
+			this.locker.Unlock()
 			return nil, err
 		}
 	}
