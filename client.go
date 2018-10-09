@@ -72,7 +72,14 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 	// 如果失去连接，则重新连接
 	if err != nil {
 		if err == ErrClientDisconnect {
+			// 重试一次
 			this.Close()
+			err = this.Connect()
+			if err == nil {
+				resp, err = req.CallOn(this.conn)
+			} else {
+				this.Close()
+			}
 		}
 	}
 
@@ -86,10 +93,11 @@ func (this *Client) Close() {
 }
 
 func (this *Client) Connect() error {
+	this.isAvailable = false
+
 	// @TODO 设置并使用超时时间
 	conn, err := net.Dial(this.network, this.address)
 	if err != nil {
-		this.isAvailable = false
 		return err
 	}
 
