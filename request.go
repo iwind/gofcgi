@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net"
 	"net/http"
@@ -131,17 +130,17 @@ func (this *Request) writeParams(conn net.Conn) error {
 
 func (this *Request) writeStdin(conn net.Conn) error {
 	if this.body != nil {
-		if this.bodyLength > 0 {
-			this.writeRecordReader(conn, FCGI_STDIN, this.body, this.bodyLength)
-		} else {
-			data, err := ioutil.ReadAll(this.body)
-			if err != nil {
-				return err
+		// 分解body
+		buf := make([]byte, 65535)
+		for {
+			n, err := this.body.Read(buf)
+
+			if n > 0 {
+				this.writeRecord(conn, FCGI_STDIN, buf[:n])
 			}
 
-			err = this.writeRecord(conn, FCGI_STDIN, data)
 			if err != nil {
-				return err
+				break
 			}
 		}
 	}
@@ -174,42 +173,6 @@ func (this *Request) writeRecord(conn net.Conn, recordType byte, contentData []b
 
 	// 写入数据
 	_, err = conn.Write(contentData)
-	if err != nil {
-		return ErrClientDisconnect
-	}
-
-	// 填充
-	_, err = conn.Write(PAD[:header.PaddingLength])
-	if err != nil {
-		return ErrClientDisconnect
-	}
-
-	return nil
-}
-
-func (this *Request) writeRecordReader(conn net.Conn, recordType byte, contentReader io.Reader, contentLength uint32) error {
-	// 写入头部信息
-	header := &Header{
-		Version:       FCGI_VERSION_1,
-		Type:          recordType,
-		RequestId:     this.id,
-		ContentLength: uint16(contentLength),
-		PaddingLength: byte(-contentLength & 7),
-	}
-
-	buf := bytes.NewBuffer([]byte{})
-	err := binary.Write(buf, binary.BigEndian, header)
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(conn, buf)
-	if err != nil {
-		return ErrClientDisconnect
-	}
-
-	// 写入数据
-	_, err = io.Copy(conn, contentReader)
 	if err != nil {
 		return ErrClientDisconnect
 	}
