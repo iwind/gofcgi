@@ -1,9 +1,9 @@
 package gofcgi
 
 import (
+	"errors"
 	"sync"
 	"time"
-	"errors"
 )
 
 var pools = map[string]*Pool{} // fullAddress => *Pool
@@ -34,7 +34,7 @@ func SharedPool(network string, address string, size uint) *Pool {
 		size: size,
 	}
 
-	for i := uint(0); i < size; i ++ {
+	for i := uint(0); i < size; i++ {
 		client := NewClient(network, address)
 		client.KeepAlive()
 
@@ -46,6 +46,18 @@ func SharedPool(network string, address string, size uint) *Pool {
 		}
 		pool.clients = append(pool.clients, client)
 	}
+
+	// 监控连接
+	go func() {
+		for {
+			time.Sleep(10 * time.Second)
+			for _, client := range pool.clients {
+				if !client.isAvailable {
+					client.Connect()
+				}
+			}
+		}
+	}()
 
 	pools[fullAddress] = pool
 

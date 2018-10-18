@@ -88,7 +88,9 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 
 func (this *Client) Close() {
 	this.isAvailable = false
-	this.conn.Close()
+	if this.conn != nil {
+		this.conn.Close()
+	}
 	this.conn = nil
 }
 
