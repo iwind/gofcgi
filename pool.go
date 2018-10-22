@@ -72,18 +72,24 @@ func (this *Pool) Client() (*Client, error) {
 		return nil, errors.New("no available clients to use")
 	}
 
-	// 查找空闲的
+	// find a free one
 	for _, client := range this.clients {
 		if client.isAvailable && client.isFree {
 			return client, nil
 		}
 	}
 
-	// 查找可用的
+	// find available on
 	for _, client := range this.clients {
 		if client.isAvailable {
 			return client, nil
 		}
+	}
+
+	// use first one
+	err := this.clients[0].Connect()
+	if err == nil {
+		return this.clients[0], nil
 	}
 
 	return nil, errors.New("no available clients to use")
