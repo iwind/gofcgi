@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net"
 	"net/http"
@@ -28,7 +29,7 @@ var contentLengthRegexp = regexp.MustCompile("^\\d+$")
 type Request struct {
 	id         uint16
 	keepAlive  bool
-	timeout    time.Duration // @TODO 待实现
+	timeout    time.Duration
 	params     map[string]string
 	body       io.Reader
 	bodyLength uint32
@@ -131,7 +132,7 @@ func (this *Request) writeParams(conn net.Conn) error {
 func (this *Request) writeStdin(conn net.Conn) error {
 	if this.body != nil {
 		// 分解body
-		buf := make([]byte, 65535)
+		buf := make([]byte, 60000)
 		for {
 			n, err := this.body.Read(buf)
 
@@ -205,6 +206,7 @@ func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
 		b := make([]byte, respHeader.ContentLength+uint16(respHeader.PaddingLength))
 		err = binary.Read(conn, binary.BigEndian, &b)
 		if err != nil {
+			log.Println("err:", err.Error())
 			return nil, ErrClientDisconnect
 		}
 

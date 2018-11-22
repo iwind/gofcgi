@@ -2,6 +2,7 @@ package gofcgi
 
 import (
 	"errors"
+	"log"
 	"sync"
 	"time"
 )
@@ -40,9 +41,17 @@ func SharedPool(network string, address string, size uint) *Pool {
 
 		// 第一个同步连接供使用，其余的可以异步建立连接
 		if i == 0 {
-			client.Connect()
+			err := client.Connect()
+			if err != nil {
+				log.Println("[gofcgi]" + err.Error())
+			}
 		} else {
-			go client.Connect()
+			go func() {
+				err := client.Connect()
+				if err != nil {
+					log.Println("[gofcgi]" + err.Error())
+				}
+			}()
 		}
 		pool.clients = append(pool.clients, client)
 	}
