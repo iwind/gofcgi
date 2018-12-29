@@ -38,9 +38,13 @@ func TestClientGet(t *testing.T) {
 		"REQUEST_METHOD": "GET",
 	})
 
-	resp, err := client.Call(req)
+	resp, stderr, err := client.Call(req)
 	if err != nil {
 		t.Fatal("do error:", err.Error())
+	}
+
+	if len(stderr) > 0 {
+		t.Fatal("stderr:", string(stderr))
 	}
 
 	t.Log("resp, status:", resp.StatusCode)
@@ -85,7 +89,7 @@ func TestClientGetAlive(t *testing.T) {
 			"REQUEST_METHOD": "GET",
 		})
 
-		resp, err := client.Call(req)
+		resp, _, err := client.Call(req)
 		if err != nil {
 			t.Fatal("do error:", err.Error())
 		}
@@ -138,7 +142,7 @@ func TestClientPost(t *testing.T) {
 	//req.SetParam("CONTENT_LENGTH", fmt.Sprintf("%d", r.Len()))
 	req.SetBody(r, uint32(r.Len()))
 
-	resp, err := client.Call(req)
+	resp, _, err := client.Call(req)
 	if err != nil {
 		t.Fatal("do error:", err.Error())
 	}
@@ -196,7 +200,7 @@ func TestClientPerformance(t *testing.T) {
 					"REQUEST_METHOD": "GET",
 				})
 
-				resp, err := client.Call(req)
+				resp, _, err := client.Call(req)
 				if err != nil {
 					locker.Lock()
 					countFail++

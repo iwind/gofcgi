@@ -63,20 +63,20 @@ func (this *Request) SetTimeout(timeout time.Duration) {
 	this.timeout = timeout
 }
 
-func (this *Request) CallOn(conn net.Conn) (*http.Response, error) {
-	err := this.writeBeginRequest(conn)
+func (this *Request) CallOn(conn net.Conn) (resp *http.Response, stderr []byte, err error) {
+	err = this.writeBeginRequest(conn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = this.writeParams(conn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = this.writeStdin(conn)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return this.readStdout(conn)
@@ -187,15 +187,14 @@ func (this *Request) writeRecord(conn net.Conn, recordType byte, contentData []b
 	return nil
 }
 
-func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
+func (this *Request) readStdout(conn net.Conn) (resp *http.Response, stderr []byte, err error) {
 	stdout := []byte{}
-	stderr := []byte{}
 
 	for {
 		respHeader := Header{}
 		err := binary.Read(conn, binary.BigEndian, &respHeader)
 		if err != nil {
-			return nil, ErrClientDisconnect
+			return nil, nil, ErrClientDisconnect
 		}
 
 		// 检查ID是否一致
@@ -207,7 +206,7 @@ func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
 		err = binary.Read(conn, binary.BigEndian, &b)
 		if err != nil {
 			log.Println("err:", err.Error())
-			return nil, ErrClientDisconnect
+			return nil, nil, ErrClientDisconnect
 		}
 
 		if respHeader.Type == FCGI_STDOUT {
@@ -243,7 +242,7 @@ func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
 		resp, err := http.ReadResponse(bufio.NewReader(bytes.NewReader(statusStdout)), nil)
 
 		if err != nil {
-			return nil, err
+			return nil, stderr, err
 		}
 
 		if !foundStatus {
@@ -263,14 +262,14 @@ func (this *Request) readStdout(conn net.Conn) (*http.Response, error) {
 			}
 		}
 
-		return resp, nil
+		return resp, stderr, nil
 	}
 
 	if len(stderr) > 0 {
-		return nil, errors.New("fcgi:" + string(stderr))
+		return nil, stderr, errors.New("fcgi:" + string(stderr))
 	}
 
-	return nil, errors.New("no response from server")
+	return nil, stderr, errors.New("no response from server")
 }
 
 func (this *Request) nextId() uint16 {

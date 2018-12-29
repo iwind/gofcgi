@@ -58,7 +58,7 @@ func (this *Client) KeepAlive() {
 	this.keepAlive = true
 }
 
-func (this *Client) Call(req *Request) (*http.Response, error) {
+func (this *Client) Call(req *Request) (resp *http.Response, stderr []byte, err error) {
 	this.isFree = false
 
 	this.locker.Lock()
@@ -67,7 +67,7 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 		err := this.Connect()
 		if err != nil {
 			this.locker.Unlock()
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -84,13 +84,13 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 	}()
 
 	if this.conn == nil {
-		return nil, errors.New("no connection to server")
+		return nil, nil, errors.New("no connection to server")
 	}
 
 	if req.timeout > 0 {
 		this.beforeTime(req.timeout)
 	}
-	resp, err := req.CallOn(this.conn)
+	resp, stderr, err = req.CallOn(this.conn)
 	this.endTime()
 
 	// 如果失去连接，则重新连接
@@ -105,7 +105,7 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 				if req.timeout > 0 {
 					this.beforeTime(req.timeout)
 				}
-				resp, err = req.CallOn(this.conn)
+				resp, stderr, err = req.CallOn(this.conn)
 				this.endTime()
 			} else {
 				log.Println("[gofcgi]again:" + err.Error())
@@ -114,7 +114,7 @@ func (this *Client) Call(req *Request) (*http.Response, error) {
 		}
 	}
 
-	return resp, err
+	return resp, stderr, err
 }
 
 func (this *Client) Close() {
