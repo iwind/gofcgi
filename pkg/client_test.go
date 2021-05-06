@@ -1,4 +1,4 @@
-package gofcgi
+package pkg
 
 import (
 	"bytes"

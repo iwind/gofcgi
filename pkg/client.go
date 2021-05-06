@@ -1,4 +1,4 @@
-package gofcgi
+package pkg
 
 import (
 	"errors"
@@ -38,12 +38,12 @@ func NewClient(network string, address string) *Client {
 		expireTime:  time.Now().Add(86400 * time.Second),
 	}
 
-	// 处理超时
+	// deal with expireTime
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
 			if time.Since(client.expireTime) > 0 {
-				client.conn.Close()
+				_ = client.conn.Close()
 
 				client.expireLocker.Lock()
 				client.expireTime = time.Now().Add(86400 * time.Second)
@@ -77,7 +77,7 @@ func (this *Client) Call(req *Request) (resp *http.Response, stderr []byte, err 
 
 	defer func() {
 		if this.mock {
-			time.Sleep(1 * time.Second) // 模拟占用连接
+			time.Sleep(1 * time.Second)
 		}
 		this.isFree = true
 		this.locker.Unlock()
@@ -93,12 +93,12 @@ func (this *Client) Call(req *Request) (resp *http.Response, stderr []byte, err 
 	resp, stderr, err = req.CallOn(this.conn)
 	this.endTime()
 
-	// 如果失去连接，则重新连接
+	// if lost connection, retry
 	if err != nil {
 		log.Println("[gofcgi]" + err.Error())
 
 		if err == ErrClientDisconnect {
-			// 重试一次
+			// retry again
 			this.Close()
 			err = this.Connect()
 			if err == nil {
@@ -120,7 +120,7 @@ func (this *Client) Call(req *Request) (resp *http.Response, stderr []byte, err 
 func (this *Client) Close() {
 	this.isAvailable = false
 	if this.conn != nil {
-		this.conn.Close()
+		_ = this.conn.Close()
 	}
 	this.conn = nil
 }
@@ -128,7 +128,7 @@ func (this *Client) Close() {
 func (this *Client) Connect() error {
 	this.isAvailable = false
 
-	// @TODO 设置并使用超时时间
+	// @TODO set timeout
 	conn, err := net.Dial(this.network, this.address)
 	if err != nil {
 		log.Println("[gofcgi]" + err.Error())

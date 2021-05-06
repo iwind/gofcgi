@@ -1,4 +1,4 @@
-package gofcgi
+package pkg
 
 import (
 	"errors"
@@ -39,7 +39,7 @@ func SharedPool(network string, address string, size uint) *Pool {
 		client := NewClient(network, address)
 		client.KeepAlive()
 
-		// 第一个同步连接供使用，其余的可以异步建立连接
+		// prepare one for first request, and left for async request
 		if i == 0 {
 			err := client.Connect()
 			if err != nil {
@@ -56,13 +56,13 @@ func SharedPool(network string, address string, size uint) *Pool {
 		pool.clients = append(pool.clients, client)
 	}
 
-	// 监控连接
+	// watch connections
 	go func() {
-		for {
-			time.Sleep(10 * time.Second)
+		ticker := time.NewTicker(10 * time.Second)
+		for range ticker.C {
 			for _, client := range pool.clients {
 				if !client.isAvailable {
-					client.Connect()
+					_ = client.Connect()
 				}
 			}
 		}

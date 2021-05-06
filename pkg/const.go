@@ -1,6 +1,6 @@
-package gofcgi
+package pkg
 
-// 参考 http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
+// referer: http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 
 const (
 	// Listening socket file number

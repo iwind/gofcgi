@@ -1,10 +1,10 @@
-package gofcgi
+package pkg
 
 import (
-	"testing"
-	"time"
 	"errors"
 	"io/ioutil"
+	"testing"
+	"time"
 )
 
 func TestSharedPool(t *testing.T) {
@@ -12,7 +12,7 @@ func TestSharedPool(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	for i := 0; i < 3; i ++ {
+	for i := 0; i < 3; i++ {
 		go func() {
 			client, err := pool.Client()
 			if err != nil {
@@ -41,7 +41,7 @@ func TestSharedPool(t *testing.T) {
 				"REQUEST_METHOD": "GET",
 			})
 
-			resp, err := client.Call(req)
+			resp, _, err := client.Call(req)
 			if err != nil {
 				t.Log(err.Error())
 			} else {

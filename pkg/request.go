@@ -1,4 +1,4 @@
-package gofcgi
+package pkg
 
 import (
 	"bufio"
@@ -24,7 +24,7 @@ var statusLineRegexp = regexp.MustCompile("^HTTP/[.\\d]+ \\d+")
 var statusSplitRegexp = regexp.MustCompile("^(\\d+)\\s+")
 var contentLengthRegexp = regexp.MustCompile("^\\d+$")
 
-// 参考文档：
+// Request Referer:
 // 	- FastCGI Specification: http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 type Request struct {
 	id         uint16
@@ -125,19 +125,22 @@ func (this *Request) writeParams(conn net.Conn) error {
 		}
 	}
 
-	// 结束
+	// write end
 	return this.writeRecord(conn, FCGI_PARAMS, []byte{})
 }
 
 func (this *Request) writeStdin(conn net.Conn) error {
 	if this.body != nil {
-		// 分解body
+		// read body with buffer
 		buf := make([]byte, 60000)
 		for {
 			n, err := this.body.Read(buf)
 
 			if n > 0 {
-				this.writeRecord(conn, FCGI_STDIN, buf[:n])
+				err := this.writeRecord(conn, FCGI_STDIN, buf[:n])
+				if err != nil {
+					return err
+				}
 			}
 
 			if err != nil {
@@ -152,7 +155,7 @@ func (this *Request) writeStdin(conn net.Conn) error {
 func (this *Request) writeRecord(conn net.Conn, recordType byte, contentData []byte) error {
 	contentLength := len(contentData)
 
-	// 写入头部信息
+	// write header
 	header := &Header{
 		Version:       FCGI_VERSION_1,
 		Type:          recordType,
@@ -172,13 +175,13 @@ func (this *Request) writeRecord(conn net.Conn, recordType byte, contentData []b
 		return ErrClientDisconnect
 	}
 
-	// 写入数据
+	// write data
 	_, err = conn.Write(contentData)
 	if err != nil {
 		return ErrClientDisconnect
 	}
 
-	// 填充
+	// write padding
 	_, err = conn.Write(PAD[:header.PaddingLength])
 	if err != nil {
 		return ErrClientDisconnect
@@ -197,7 +200,7 @@ func (this *Request) readStdout(conn net.Conn) (resp *http.Response, stderr []by
 			return nil, nil, ErrClientDisconnect
 		}
 
-		// 检查ID是否一致
+		// check request id
 		if respHeader.RequestId != this.id {
 			continue
 		}

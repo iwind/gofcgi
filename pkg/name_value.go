@@ -1,4 +1,4 @@
-package gofcgi
+package pkg
 
 type NameValuePair struct {
 	NameLength  uint16
