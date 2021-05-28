@@ -4,14 +4,14 @@ a **golang client for fastcgi**, support connection pool and easy to use.
 # Pool usage
 ~~~golang
 // retrieve shared pool
-pool := gofcgi.SharedPool("tcp", "127.0.0.1:9000", 16)
+pool := fcgi.SharedPool("tcp", "127.0.0.1:9000", 16)
 client, err := pool.Client()
 if err != nil {
     return
 }
 
 // create a request
-req := gofcgi.NewRequest()
+req := fcgi.NewRequest()
 params := map[string]string{
 	"SCRIPT_FILENAME": "[PATH TO YOUR SCRIPT]/index.php",
 	"SERVER_SOFTWARE": "gofcgi/1.0.0",
