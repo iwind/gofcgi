@@ -1,4 +1,4 @@
-package pkg
+package fcgi
 
 // referer: http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html
 

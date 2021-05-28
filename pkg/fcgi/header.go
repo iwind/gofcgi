@@ -1,4 +1,4 @@
-package pkg
+package fcgi
 
 type Header struct {
 	Version       byte
